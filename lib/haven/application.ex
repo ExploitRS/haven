@@ -1,10 +1,11 @@
 defmodule Haven.Application do
+  @moduledoc false
   use Application
 
   @impl true
   def start(_type, _args) do
     children = [
-      {Plug.Cowboy, scheme: :http, plug: Haven.Router, options: [port: 4000]}
+      {Plug.Cowboy, plug: Haven.Router, scheme: :http, options: [port: 4444]}
     ]
 
     opts = [strategy: :one_for_one, name: Haven.Supervisor]

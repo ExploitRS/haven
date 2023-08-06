@@ -12,7 +12,4 @@ defmodule Haven do
       :world
 
   """
-  def hello do
-    :world
-  end
 end

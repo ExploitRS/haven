@@ -5,7 +5,9 @@ defmodule Haven.Router do
   plug :dispatch
 
   get "/" do
-    send_resp(conn, 200, "This is Haven in Exploit.RS")
+    conn
+    |> put_resp_content_type("text/html")
+    |> send_resp(200, "This is Haven in Exploit.RS")
   end
 
   match _ do
