@@ -1,8 +1,6 @@
-use std::clone;
 use std::fs;
-use std::cmp;
 use serde::{Deserialize, Serialize};
-use actix_web::{http, web, get, post, App, HttpServer, Responder, HttpResponse, Error};
+use actix_web::{http, web, get, post, App, HttpServer, HttpResponse, Error};
 use actix_cors::Cors;
 use toml;
 
@@ -22,14 +20,6 @@ impl PartialEq for Door {
 #[derive(Debug, Serialize, Deserialize)]
 struct Cfg {
     door: Door,
-}
-
-impl Cfg {
-    fn new() -> Cfg {
-        Cfg {
-            door: Door { status: false },
-        }
-    }
 }
 
 // impl From<&Door> for Cfg {
