@@ -36,14 +36,6 @@ impl Server {
     }
 }
 
-// impl From<&Door> for Cfg {
-//     fn from(door: &Door) -> Self {
-//         Cfg {
-//             door,
-//         }
-//     }
-// }
-
 #[get("/api/status/door")]
 async fn status_door() -> HttpResponse {
     let contents = fs::read_to_string(FILENAME)
