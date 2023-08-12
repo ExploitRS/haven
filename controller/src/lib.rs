@@ -1,9 +1,5 @@
 use serialport;
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 pub struct HavenCntrlr {
     serial_port: Box<dyn serialport::SerialPort>, 
     degree: u8,
@@ -35,16 +31,5 @@ impl HavenCntrlr {
     pub fn unlock(mut self) -> Result<(), serialport::Error> {
         self.serial_port.write(&[0])?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
     }
 }
