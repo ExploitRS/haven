@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use actix_web::{http, web, get, post, App, HttpServer, HttpResponse, Error};
 use actix_cors::Cors;
 use toml;
+use controller::HavenCntrlr;
 
 const FILENAME: &str = "door.toml";
 
@@ -20,6 +21,19 @@ impl PartialEq for Door {
 #[derive(Debug, Serialize, Deserialize)]
 struct Cfg {
     door: Door,
+}
+
+struct Server {
+    controller: HavenCntrlr,
+}
+
+impl Server {
+    fn new() -> Self {
+        let controller = HavenCntrlr::new();
+        Server {
+            controller,
+        }
+    }
 }
 
 // impl From<&Door> for Cfg {
@@ -43,7 +57,7 @@ async fn status_door() -> HttpResponse {
 }
 
 #[post("api/status/door")]
-async fn update_door_status(body: web::Bytes) -> Result<HttpResponse, Error> {
+async fn update_door_status(body: web::Bytes, server: web::Data<Server>) -> Result<HttpResponse, Error> {
     println!("{:?}", body);
     let new_door = serde_json::from_slice::<Door>(&body)?;
 
