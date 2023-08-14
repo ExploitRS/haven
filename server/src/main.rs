@@ -1,20 +1,32 @@
 use std::fs;
+use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
-use actix_web::{http, web, get, post, App, HttpServer, HttpResponse, Error};
+use actix_web::{http, web, get, post, App, HttpServer, HttpResponse, Error };
 use actix_cors::Cors;
 use toml;
-use controller::HavenCntrlr;
+use controller::{ HavenCntrlr, State};
 
 const FILENAME: &str = "door.toml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Door {
-    status: bool,
+    state: bool,
 }
 
 impl PartialEq for Door {
     fn eq(&self, other: &Self) -> bool {
-        self.status == other.status
+        self.state == other.state
+    }
+}
+
+impl TryInto<State> for Door {
+    type Error = &'static str;
+
+    fn try_into(self) -> Result<State, Self::Error> {
+        match &self.state {
+            true => Ok(State::Locked),
+            false => Ok(State::Unlocked),
+        }
     }
 }
 
@@ -36,6 +48,12 @@ impl Server {
     }
 }
 
+// impl DerefMut for Server {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         Arc::get_mut(&mut self.controller).unwrap()
+//     }
+// }
+
 #[get("/api/status/door")]
 async fn status_door() -> HttpResponse {
     let contents = fs::read_to_string(FILENAME)
@@ -49,23 +67,20 @@ async fn status_door() -> HttpResponse {
 }
 
 #[post("api/status/door")]
-async fn update_door_status(body: web::Bytes, server: web::Data<Server>) -> Result<HttpResponse, Error> {
-    println!("{:?}", body);
-    let new_door = serde_json::from_slice::<Door>(&body)?;
+async fn update_door_status(body: web::Bytes, data: web::Data<Mutex<Server>>) -> Result<HttpResponse, Error> {
+    
+    let door = serde_json::from_slice::<Door>(&body)?;
+    let server = data.clone();
+    let mut server = server.lock().unwrap();
 
-    let contents = fs::read_to_string(FILENAME)
-        .expect("Something went wrong reading the file");
-    let cfg = toml::from_str::<Cfg>(&contents).unwrap();
-    let current_door = cfg.door;
-    let mut new_cfg: Cfg = Cfg{ door: current_door.clone() };
-
-    if current_door != new_door {
-        new_cfg = Cfg { door: new_door };
-        let new_contents = toml::to_string(&new_cfg).unwrap();
-        fs::write(FILENAME, new_contents).expect("Unable to write file");
+    match Door::try_into(door).unwrap() {
+        State::Locked => server.controller.lock().unwrap(),
+        State::Unlocked => server.controller.unlock().unwrap(),
     }
 
-    Ok(HttpResponse::Ok().json(&new_cfg.door))
+    let door = Door { state: server.controller.is_locked()};
+
+    Ok(HttpResponse::Ok().json(door.clone()))
     // let contents = fs::read_to_string(FILENAME)
     //     .expect("Something went wrong reading the file");
 
@@ -86,7 +101,11 @@ async fn main() -> std::io::Result<()> {
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)
             .max_age(3600);
+        
+        let data = web::Data::new(Mutex::new(Server::new()));
+
         App::new()
+            .app_data(web::Data::clone(&data))
             .wrap(cors)
             .service(status_door)
             .service(update_door_status)
