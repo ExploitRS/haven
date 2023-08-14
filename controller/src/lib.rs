@@ -49,5 +49,4 @@ impl HavenCntrlr {
         self.state = State::Unlocked;
         Ok(())
     }
-    
 }
