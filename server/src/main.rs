@@ -48,12 +48,6 @@ impl Server {
     }
 }
 
-// impl DerefMut for Server {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         Arc::get_mut(&mut self.controller).unwrap()
-//     }
-// }
-
 #[get("/api/status/door")]
 async fn status_door() -> HttpResponse {
     let contents = fs::read_to_string(FILENAME)
@@ -81,12 +75,6 @@ async fn update_door_status(body: web::Bytes, data: web::Data<Mutex<Server>>) ->
     let door = Door { state: server.controller.is_locked()};
 
     Ok(HttpResponse::Ok().json(door.clone()))
-    // let contents = fs::read_to_string(FILENAME)
-    //     .expect("Something went wrong reading the file");
-
-    // let cfg = toml::from_str::<Cfg>(&contents).unwrap();
-    // let door = cfg.door;
-
 }
 
 #[actix_web::main] // or #[tokio::main]
